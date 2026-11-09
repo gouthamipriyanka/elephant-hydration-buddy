@@ -1,0 +1,47 @@
+name: Init signing key (run ONCE)
+
+# Generates the release signing key INSIDE GitHub Actions, so it never exists anywhere else.
+# The key is encrypted (AES-256, GnuPG) with your passphrase secret and committed as
+# android/signing/ellie.jks.gpg. Without the passphrase the file is useless.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Generate + encrypt key
+        env:
+          PASS: ${{ secrets.ELLIE_SIGNING_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -f android/signing/ellie.jks.gpg ]; then
+            echo "::error::A signing key already exists. Refusing to overwrite (it would break app updates)."; exit 1
+          fi
+          if [ "${#PASS}" -lt 24 ]; then
+            echo "::error::ELLIE_SIGNING_PASSPHRASE secret missing or shorter than 24 characters."; exit 1
+          fi
+          mkdir -p android/signing
+          keytool -genkeypair -keystore "$RUNNER_TEMP/ellie.jks" -storetype PKCS12 -alias ellie \
+            -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Ellie Hydration, O=Family" \
+            -storepass:env PASS -keypass:env PASS
+          printf '%s' "$PASS" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-count 65011712 \
+            -o android/signing/ellie.jks.gpg "$RUNNER_TEMP/ellie.jks"
+          keytool -list -keystore "$RUNNER_TEMP/ellie.jks" -storepass:env PASS | grep -i "SHA-256" | tee android/signing/CERT_FINGERPRINT.txt
+          shred -u "$RUNNER_TEMP/ellie.jks"
+      - name: Commit encrypted key
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android/signing/
+          git commit -m "Add encrypted release signing key (generated in CI)"
+          git push

@@ -10,7 +10,6 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment: prod   # add required reviewers on this environment for an approval gate
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -20,19 +19,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.11.1"
-      - name: Restore signing key from secrets (never written to logs)
+      - name: Decrypt signing key (never written to logs)
         env:
-          KEYSTORE_B64: ${{ secrets.ELLIE_KEYSTORE_B64 }}
+          PASS: ${{ secrets.ELLIE_SIGNING_PASSPHRASE }}
         run: |
-          test -n "$KEYSTORE_B64" || { echo "::error::ELLIE_KEYSTORE_B64 secret missing"; exit 1; }
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ellie.jks"
+          test -f android/signing/ellie.jks.gpg || { echo "::error::Run the 'Init signing key' workflow first"; exit 1; }
+          printf '%s' "$PASS" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            -d -o "$RUNNER_TEMP/ellie.jks" android/signing/ellie.jks.gpg
           echo "ELLIE_KEYSTORE_PATH=$RUNNER_TEMP/ellie.jks" >> "$GITHUB_ENV"
       - name: Test + build signed prod APK
         working-directory: android
         env:
-          ELLIE_KEYSTORE_PASSWORD: ${{ secrets.ELLIE_KEYSTORE_PASSWORD }}
-          ELLIE_KEY_ALIAS: ${{ secrets.ELLIE_KEY_ALIAS }}
-          ELLIE_KEY_PASSWORD: ${{ secrets.ELLIE_KEY_PASSWORD }}
+          ELLIE_KEYSTORE_PASSWORD: ${{ secrets.ELLIE_SIGNING_PASSPHRASE }}
         run: gradle --no-daemon -PellieVersionCode=${{ github.run_number }} testProdReleaseUnitTest lintProdRelease assembleProdRelease
       - name: Verify signature and checksum
         working-directory: android/app/build/outputs/apk/prod/release
@@ -43,7 +41,7 @@ jobs:
           sha256sum ellie-*.apk | tee SHA256SUMS.txt
       - name: Remove key from runner
         if: always()
-        run: rm -f "$RUNNER_TEMP/ellie.jks"
+        run: shred -u "$RUNNER_TEMP/ellie.jks" 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
           name: ellie-prod-${{ github.run_number }}

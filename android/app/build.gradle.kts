@@ -68,8 +68,9 @@ android {
             create("release") {
                 storeFile = file(ks)
                 storePassword = System.getenv("ELLIE_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ELLIE_KEY_ALIAS")
-                keyPassword = System.getenv("ELLIE_KEY_PASSWORD")
+                // PKCS12 keystore: key password == store password; alias fixed (not secret).
+                keyAlias = System.getenv("ELLIE_KEY_ALIAS") ?: "ellie"
+                keyPassword = System.getenv("ELLIE_KEY_PASSWORD") ?: System.getenv("ELLIE_KEYSTORE_PASSWORD")
             }
         }
     }
