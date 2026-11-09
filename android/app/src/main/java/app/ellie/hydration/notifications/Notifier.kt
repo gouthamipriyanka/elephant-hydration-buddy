@@ -48,6 +48,16 @@ object Notifier {
     private fun elephant(ctx: Context, @DrawableRes res: Int, size: Int = 512): Bitmap =
         ContextCompat.getDrawable(ctx, res)!!.toBitmap(size, size)
 
+    /** BigPictureStyle crops to ~2:1, so centre the whole elephant on a wide white canvas. */
+    private fun wideElephant(ctx: Context, @DrawableRes res: Int): Bitmap {
+        val h = 512
+        val out = Bitmap.createBitmap(h * 2, h, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(out)
+        canvas.drawColor(android.graphics.Color.WHITE)
+        canvas.drawBitmap(elephant(ctx, res, h), (h / 2).toFloat(), 0f, null)
+        return out
+    }
+
     private fun art(mood: Mood) = when (mood) {
         Mood.THIRSTY -> R.drawable.elephant_thirsty
         Mood.NEUTRAL -> R.drawable.elephant_neutral
@@ -85,6 +95,7 @@ object Notifier {
     fun postReminder(ctx: Context, mood: Mood, text: String, consumed: Int, target: Int, silent: Boolean = false) {
         if (!canPost(ctx)) return
         val pic = elephant(ctx, art(mood))
+        val wide = wideElephant(ctx, art(mood))
         val title = if (mood == Mood.THIRSTY) "Ellie is thirsty 🥺" else "Water time 💧"
 
         val remoteInput = RemoteInput.Builder(KEY_AMOUNT).setLabel(ctx.getString(R.string.input_hint)).build()
@@ -98,7 +109,7 @@ object Notifier {
             .setContentTitle(title)
             .setContentText(text)
             .setLargeIcon(pic)
-            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(pic).bigLargeIcon(null as Bitmap?).setSummaryText(text))
+            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(wide).bigLargeIcon(null as Bitmap?).setSummaryText(text))
             .setProgress(target, consumed.coerceAtMost(target), false)
             .setOngoing(true)
             .setAutoCancel(false)
@@ -124,13 +135,14 @@ object Notifier {
     fun postKudos(ctx: Context, text: String, consumed: Int, target: Int, goalMet: Boolean) {
         if (!canPost(ctx)) return
         val pic = elephant(ctx, R.drawable.elephant_happy)
+        val wide = wideElephant(ctx, R.drawable.elephant_happy)
         val title = if (goalMet) "Goal reached! 🏆🐘" else "Kudos! 🎉🐘"
         val n = NotificationCompat.Builder(ctx, CH_KUDOS)
             .setSmallIcon(R.drawable.ic_stat_drop)
             .setContentTitle(title)
             .setContentText(text)
             .setLargeIcon(pic)
-            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(pic).bigLargeIcon(null as Bitmap?).setSummaryText(text))
+            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(wide).bigLargeIcon(null as Bitmap?).setSummaryText(text))
             .setProgress(target, consumed.coerceAtMost(target), false)
             .setAutoCancel(true)
             .setTimeoutAfter(15 * 60_000L)
@@ -145,12 +157,13 @@ object Notifier {
     fun postBottle(ctx: Context, text: String) {
         if (!canPost(ctx)) return
         val pic = elephant(ctx, R.drawable.elephant_bottle)
+        val wide = wideElephant(ctx, R.drawable.elephant_bottle)
         val n = NotificationCompat.Builder(ctx, CH_BOTTLE)
             .setSmallIcon(R.drawable.ic_stat_drop)
             .setContentTitle("Got your water bottle? 🧴🐘")
             .setContentText(text)
             .setLargeIcon(pic)
-            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(pic).bigLargeIcon(null as Bitmap?).setSummaryText(text))
+            .setStyle(NotificationCompat.BigPictureStyle().bigPicture(wide).bigLargeIcon(null as Bitmap?).setSummaryText(text))
             .setAutoCancel(true)
             .setTimeoutAfter(30 * 60_000L)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
