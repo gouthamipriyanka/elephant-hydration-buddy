@@ -107,8 +107,7 @@ private fun Welcome(onNext: () -> Unit) = Page {
     Image(painterResource(R.drawable.elephant_happy), contentDescription = "Ellie the elephant", Modifier.size(200.dp))
     Text("Hi love 💙", fontSize = 28.sp, fontWeight = FontWeight.Bold)
     Text(
-        "Someone who loves and respects you very much made this for you. " +
-            "Meet Ellie! She'll gently remind you to drink water, cheer when you do, " +
+        "Meet Ellie! She'll gently remind you to drink water, cheer when you do, " +
             "and nudge you to grab your bottle when you head out.\n\nI'm always here for you.",
         textAlign = TextAlign.Center,
     )
