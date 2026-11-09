@@ -39,6 +39,21 @@ PY
 }
 
 open_shade()  { adb shell cmd statusbar expand-notifications; sleep 2; }
+hide_kb()     { adb shell input keyevent 111; sleep 1; }
+# Expand the top notification so the big elephant picture shows.
+expand_top()  { tap_text_noscroll "Expand" || true; sleep 1; }
+tap_text_noscroll() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml /tmp/ui.xml >/dev/null 2>&1
+  local xy; xy=$(python3 - "$1" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+try: root = ET.parse("/tmp/ui.xml").getroot()
+except Exception: sys.exit(0)
+for n in root.iter("node"):
+    if sys.argv[1] in n.get("text","") or sys.argv[1] in n.get("content-desc",""):
+        x1,y1,x2,y2 = map(int, re.findall(r"\d+", n.get("bounds"))); print((x1+x2)//2, (y1+y2)//2); break
+PY
+); [ -n "$xy" ] && { adb shell input tap $xy; sleep 1; return 0; }; return 1; }
+count_reminders() { adb shell dumpsys notification --noredact | grep -c "id=1001" ; }
 close_shade() { adb shell cmd statusbar collapse; sleep 1; }
 
 adb install -r "$APK"
@@ -56,24 +71,37 @@ shot home_start
 tap_text "+250 ml"
 sleep 2
 shot home_after_250
-open_shade
-shot kudos_notification
+open_shade; expand_top
+shot kudos_notification_expanded
 close_shade
 
 tap_text "Settings"
 shot settings
 tap_text "Send a test reminder"
 sleep 2
-open_shade
-shot reminder_notification
-tap_text "Log amount" && { adb shell input text "300"; sleep 1; shot typing_amount; adb shell input keyevent 66; sleep 3; shot after_typed_300; }
-close_shade
+open_shade; expand_top
+shot reminder_notification_expanded
+tap_text_noscroll "Log amount" && { adb shell input text "300"; sleep 1; shot typing_amount; adb shell input keyevent 66; sleep 3; shot after_typed_300; }
+close_shade; hide_kb
 
-tap_text "Send a test reminder"
+# Swipe-away test: post reminder, dismiss it like a user would, confirm it is re-posted.
+tap_text "Send a test reminder"; sleep 2
+echo "reminders before swipe: $(count_reminders)"
 open_shade
-# swipe the reminder away and check it comes back
-adb shell input swipe 300 500 1000 500 200; sleep 3
-shot after_swipe_away
+adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml /tmp/ui.xml >/dev/null 2>&1
+Y=$(python3 -c "
+import re,xml.etree.ElementTree as ET
+r=ET.parse('/tmp/ui.xml').getroot()
+for n in r.iter('node'):
+    t=n.get('text','')
+    if 'Ellie is thirsty' in t or 'Water time' in t:
+        x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds'))); print((y1+y2)//2); break
+")
+echo "reminder row y=$Y"
+[ -n "$Y" ] && adb shell input swipe 200 $Y 1050 $Y 150
+sleep 4
+shot after_swipe_away_should_be_back
+echo "reminders after swipe: $(count_reminders)"
 close_shade
 
 adb shell am start -n $PKG/app.ellie.hydration.ui.MainActivity

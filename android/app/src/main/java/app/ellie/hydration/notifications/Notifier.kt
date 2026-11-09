@@ -85,7 +85,7 @@ object Notifier {
     fun postReminder(ctx: Context, mood: Mood, text: String, consumed: Int, target: Int, silent: Boolean = false) {
         if (!canPost(ctx)) return
         val pic = elephant(ctx, art(mood))
-        val title = if (mood == Mood.THIRSTY) "Ellie is thirsty 🥺🐘" else "Water time 💧🐘"
+        val title = if (mood == Mood.THIRSTY) "Ellie is thirsty 🥺" else "Water time 💧"
 
         val remoteInput = RemoteInput.Builder(KEY_AMOUNT).setLabel(ctx.getString(R.string.input_hint)).build()
         val logAction = NotificationCompat.Action.Builder(
@@ -100,7 +100,6 @@ object Notifier {
             .setLargeIcon(pic)
             .setStyle(NotificationCompat.BigPictureStyle().bigPicture(pic).bigLargeIcon(null as Bitmap?).setSummaryText(text))
             .setProgress(target, consumed.coerceAtMost(target), false)
-            .setSubText("$consumed / $target ml")
             .setOngoing(true)
             .setAutoCancel(false)
             .setOnlyAlertOnce(silent)
@@ -133,7 +132,6 @@ object Notifier {
             .setLargeIcon(pic)
             .setStyle(NotificationCompat.BigPictureStyle().bigPicture(pic).bigLargeIcon(null as Bitmap?).setSummaryText(text))
             .setProgress(target, consumed.coerceAtMost(target), false)
-            .setSubText("$consumed / $target ml")
             .setAutoCancel(true)
             .setTimeoutAfter(15 * 60_000L)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
