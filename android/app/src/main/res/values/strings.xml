@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ellie 🐘</string>
+    <string name="channel_reminders">Water reminders</string>
+    <string name="channel_kudos">Kudos</string>
+    <string name="channel_bottle">Bottle reminder</string>
+    <string name="notif_public">Ellie has a little message for you 🐘</string>
+    <string name="action_log">Log amount</string>
+    <string name="action_250">250 ml</string>
+    <string name="action_500">500 ml</string>
+    <string name="input_hint">How much did you drink? (ml)</string>
+</resources>

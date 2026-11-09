@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install (hash-locked runtime deps)
+        run: |
+          pip install --require-hashes -r requirements.txt
+          pip install -r requirements-dev.in
+      - run: ruff check app tests
+      - run: pytest -q
+      - name: Bundled Android messages are in sync with messages.yaml
+        run: |
+          python -m app.cli export-messages /tmp/messages.json
+          diff -u ../android/app/src/main/assets/messages.json /tmp/messages.json
+
+  art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generated elephant drawables are up to date
+        run: |
+          python3 art/generate_elephants.py
+          git diff --exit-code -- art android/app/src/main/res/drawable
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Unit tests, lint, debug build (QA flavor)
+        working-directory: android
+        run: gradle --no-daemon testQaDebugUnitTest lintQaDebug assembleQaDebug
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-reports
+          path: android/app/build/reports/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ellie-qa-debug-apk
+          path: android/app/build/outputs/apk/qa/debug/*.apk
+          retention-days: 7
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

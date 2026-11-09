@@ -1,0 +1,19 @@
+[project]
+name = "hydration-buddy-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "S", "I", "UP"]
+ignore = ["S101", "B008"]  # asserts in tests; FastAPI Depends() defaults
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

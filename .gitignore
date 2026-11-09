@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+backend/data/
+.env
+.env.*
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+*.apk
+*.aab
+# Secrets: never commit
+*.jks
+*.keystore
+google-services.json
+*service-account*.json

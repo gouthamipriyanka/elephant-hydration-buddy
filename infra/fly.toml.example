@@ -1,0 +1,31 @@
+# Example Fly.io config (single instance + volume, matching SQLite design).
+# Copy to fly.<env>.toml per environment: app names differ per env (dev/qa/uat/prod).
+app = "hydration-buddy-prod"
+primary_region = "bom"   # pick the region closest to you
+
+[build]
+  dockerfile = "../backend/Dockerfile"
+
+[env]
+  APP_ENV = "prod"
+  PUBLIC_BASE_URL = "https://hydration-buddy-prod.fly.dev"
+
+[[mounts]]
+  source = "hydration_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 1
+
+[[http_service.checks]]
+  path = "/healthz"
+  interval = "30s"
+  timeout = "5s"
+
+# Secrets are set with `fly secrets set`, NEVER in this file:
+#   WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY,
+#   FCM_PROJECT_ID, FCM_CREDENTIALS_JSON (service-account JSON with ONLY the
+#   "Firebase Cloud Messaging API Admin" role)
