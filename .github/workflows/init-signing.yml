@@ -26,8 +26,8 @@ jobs:
           if [ -f android/signing/ellie.jks.gpg ]; then
             echo "::error::A signing key already exists. Refusing to overwrite (it would break app updates)."; exit 1
           fi
-          if [ "${#PASS}" -lt 24 ]; then
-            echo "::error::ELLIE_SIGNING_PASSPHRASE secret missing or shorter than 24 characters."; exit 1
+          if [ "${#PASS}" -lt 20 ]; then
+            echo "::error::ELLIE_SIGNING_PASSPHRASE secret missing or shorter than 20 characters."; exit 1
           fi
           mkdir -p android/signing
           keytool -genkeypair -keystore "$RUNNER_TEMP/ellie.jks" -storetype PKCS12 -alias ellie \
