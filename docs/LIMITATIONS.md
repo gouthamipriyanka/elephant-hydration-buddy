@@ -13,6 +13,12 @@ These were written down honestly at build time (Nov 2026). Treat each ⚠️ ite
 | ⚠️ | **Health facts** in `messages.yaml` | Paraphrased from CDC, Mayo Clinic, NHS and MSU Extension pages, as seen through web search on 2026-11-09. Re-check the pages periodically. |
 | ⚠️ | **Goal formula:** ~35 ml/kg plus ~500 ml per workout hour, clamped to 1.5–4.5 L | A common rule of thumb, not a clinical standard. Check with a doctor, especially with kidney or heart conditions. |
 
+## Phase 1 (standalone) specifics
+
+- **The goal is a fixed 2.6 L/day** (no WHOOP). Exercise days don't raise it, so he should drink extra on sports days. Phase 2 fixes this.
+- **Messages are bundled in the APK.** Changing them means releasing a new APK (Actions → Release APK).
+- **Updates:** install the new APK over the old one. This works because every release is signed with the same key, and the water log is kept. If the signing key were ever lost, he'd have to uninstall first and the log would be lost.
+
 ## Known functional limitations
 
 - **Android only.** An iPhone version would need a separate app (or a Flutter rewrite).

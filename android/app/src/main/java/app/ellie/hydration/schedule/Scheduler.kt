@@ -19,6 +19,7 @@ import app.ellie.hydration.data.Prefs
 import app.ellie.hydration.geo.HomeGeofence
 import app.ellie.hydration.logic.Hydration
 import app.ellie.hydration.net.Api
+import app.ellie.hydration.net.BackendConfig
 import app.ellie.hydration.notifications.Notifier
 import java.time.LocalDate
 import java.time.LocalTime
@@ -97,6 +98,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         val prefs = Prefs(ctx)
+        if (!BackendConfig.enabled) return Result.success()
         val token = prefs.deviceToken ?: return Result.success()
         val api = Api(token)
         return try {
@@ -108,7 +110,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
             prefs.targetFetchedAt = System.currentTimeMillis()
             MessageRepo(ctx).cacheFromServer(api.messagesJson())
             Result.success()
-        } catch (e: java.io.IOException) {
+        } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.success()
         }
     }

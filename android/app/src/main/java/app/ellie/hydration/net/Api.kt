@@ -10,6 +10,11 @@ import java.net.URL
 import java.net.URLEncoder
 import javax.net.ssl.HttpsURLConnection
 
+/** Phase 1 runs standalone (no server). The backend is enabled only when a URL is configured. */
+object BackendConfig {
+    val enabled: Boolean get() = BuildConfig.BACKEND_URL.isNotBlank()
+}
+
 class ApiException(val code: Int, msg: String) : IOException(msg)
 
 /**

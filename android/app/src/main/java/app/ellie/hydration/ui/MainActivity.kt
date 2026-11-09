@@ -59,6 +59,7 @@ import app.ellie.hydration.data.Prefs
 import app.ellie.hydration.geo.HomeGeofence
 import app.ellie.hydration.logic.Hydration
 import app.ellie.hydration.net.Api
+import app.ellie.hydration.net.BackendConfig
 import app.ellie.hydration.notifications.ActionReceiver
 import app.ellie.hydration.notifications.Notifier
 import app.ellie.hydration.push.PushSetup
@@ -140,7 +141,7 @@ private fun Setup(onDone: () -> Unit) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("What Ellie uses, and only if you allow it:", fontWeight = FontWeight.SemiBold)
                 Text("• Notifications: for reminders and kudos.")
-                Text("• WHOOP (optional): your workouts and weight, to set a healthy daily goal. Read-only; you can disconnect any time.")
+                if (BackendConfig.enabled) Text("• WHOOP (optional): your workouts and weight, to set a healthy daily goal. Read-only; you can disconnect any time.")
                 Text("• Location (optional): only to notice you leaving home. It never leaves your phone.")
                 Text("• Your water log stays encrypted on this phone.")
             }
@@ -151,6 +152,7 @@ private fun Setup(onDone: () -> Unit) {
             if (Build.VERSION.SDK_INT >= 33) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
         }, modifier = Modifier.fillMaxWidth()) { Text("Allow notifications") }
 
+        if (BackendConfig.enabled) {
         Text("2. Pair with the pairing code (optional, enables WHOOP)", fontWeight = FontWeight.SemiBold)
         if (!paired) {
             OutlinedTextField(code, { code = it.take(64) }, label = { Text("Pairing code") }, singleLine = true,
@@ -168,8 +170,9 @@ private fun Setup(onDone: () -> Unit) {
             Text("Paired ✅")
             WhoopConnect(prefs) { status = it }
         }
+        }
 
-        Text("3. Bottle reminder when leaving home (optional)", fontWeight = FontWeight.SemiBold)
+        Text((if (BackendConfig.enabled) "3" else "2") + ". Bottle reminder when leaving home (optional)", fontWeight = FontWeight.SemiBold)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Switch(bottle, { on ->
                 bottle = on
@@ -184,7 +187,7 @@ private fun Setup(onDone: () -> Unit) {
             }, modifier = Modifier.fillMaxWidth()) { Text("I'm at home now: save as home") }
         }
 
-        Text("4. Keep Ellie reliable", fontWeight = FontWeight.SemiBold)
+        Text((if (BackendConfig.enabled) "4" else "3") + ". Keep Ellie reliable", fontWeight = FontWeight.SemiBold)
         OutlinedButton(onClick = { openBatterySettings(ctx) }, modifier = Modifier.fillMaxWidth()) {
             Text("Battery settings: set Ellie to 'Unrestricted'")
         }
@@ -264,9 +267,13 @@ private fun Home(onSettings: () -> Unit) {
             fontSize = 22.sp, fontWeight = FontWeight.Bold,
         )
         Text("$total / $target ml today", fontSize = 18.sp)
+        if (!androidx.core.app.NotificationManagerCompat.from(ctx).areNotificationsEnabled()) {
+            Text("⚠️ Notifications are off, so Ellie can't remind you. Turn them on in Settings → Apps → Ellie → Notifications.",
+                textAlign = TextAlign.Center)
+        }
         LinearProgressIndicator(progress = { (total.toFloat() / target).coerceIn(0f, 1f) },
             modifier = Modifier.fillMaxWidth().height(10.dp))
-        if (prefs.targetSource.startsWith("fallback")) {
+        if (BackendConfig.enabled && prefs.targetSource.startsWith("fallback")) {
             Text(
                 if (prefs.targetSource == "fallback_whoop_error") "WHOOP needs reconnecting (Settings). Using a standard goal."
                 else "Using a standard goal. Connect WHOOP for a personalised one.",
@@ -332,7 +339,7 @@ private fun SettingsScreen(onBack: () -> Unit, onWiped: () -> Unit) {
                 w == null || s == null || s <= w -> "Times must be HH:MM and sleep after wake."
                 weight.isNotBlank() && (kg == null || kg !in 30f..250f) -> "Weight must be between 30 and 250 kg."
                 else -> {
-                    prefs.nickname = nick.trim(); prefs.wakeMinutes = w; prefs.sleepMinutes = s
+                    prefs.nickname = nick.trim(); prefs.wakeMinutes = w!!; prefs.sleepMinutes = s!!
                     prefs.manualWeightKg = kg ?: 0f
                     prefs.bottleRemindersEnabled = bottle && prefs.home != null
                     if (prefs.bottleRemindersEnabled) HomeGeofence.registerIfPossible(ctx) else HomeGeofence.unregister(ctx)

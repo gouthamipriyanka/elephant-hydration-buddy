@@ -28,6 +28,11 @@ WHOOP API (read-only, OAuth) ─► Backend (FastAPI) ──FCM "sync" ping (no 
                                  • webhook HMAC + dedupe                           • SQLCipher DB, Keystore keys
 ```
 
+## Release phases
+
+- **Phase 1 (current): standalone.** No server, no WHOOP. Reminders, elephants, messages and the bottle alert all run on the phone, with a standard daily goal (2.6 L; adjustable later). Install guide: [docs/INSTALL_ON_SAMSUNG.md](docs/INSTALL_ON_SAMSUNG.md).
+- **Phase 2: WHOOP.** Deploy the backend, set `ellie.backend.prod`, release a new APK, then he taps *Connect WHOOP*. See [docs/SETUP.md](docs/SETUP.md).
+
 ## Repo layout
 
 | Path | What |
@@ -37,7 +42,7 @@ WHOOP API (read-only, OAuth) ─► Backend (FastAPI) ──FCM "sync" ping (no 
 | `backend/app/messages.yaml` | **Edit me!** 70 loving messages + 10 sourced health facts |
 | `art/` | Elephant art generator (SVG + Android vectors) |
 | `infra/` | Example deploy config (Fly.io) |
-| `docs/` | [Setup guide](docs/SETUP.md) · [Security & threat model](docs/SECURITY.md) · [Limitations & things to verify](docs/LIMITATIONS.md) |
+| `docs/` | [Install on Samsung](docs/INSTALL_ON_SAMSUNG.md) · [Setup guide](docs/SETUP.md) · [Security & threat model](docs/SECURITY.md) · [Limitations & things to verify](docs/LIMITATIONS.md) |
 
 ## Customise the messages
 

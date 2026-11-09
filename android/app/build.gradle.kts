@@ -18,8 +18,9 @@ android {
         applicationId = "app.ellie.hydration"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes -PellieVersionCode=<run number> so every release can update the installed app.
+        versionCode = prop("ellieVersionCode").toIntOrNull() ?: 1
+        versionName = "1.0." + (prop("ellieVersionCode").ifBlank { "0" })
         buildConfigField("String", "FIREBASE_APP_ID", quoted(prop("ellie.firebase.appId")))
         buildConfigField("String", "FIREBASE_API_KEY", quoted(prop("ellie.firebase.apiKey")))
         buildConfigField("String", "FIREBASE_PROJECT_ID", quoted(prop("ellie.firebase.projectId")))
