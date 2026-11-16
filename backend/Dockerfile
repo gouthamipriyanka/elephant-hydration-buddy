@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Pin the base image by digest in CI/prod (Dependabot keeps it updated):
 #   FROM python:3.13-slim@sha256:<digest>
-FROM python:3.13-slim AS base
+FROM python:3.15-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /srv
